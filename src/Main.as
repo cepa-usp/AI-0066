@@ -107,7 +107,7 @@ package
 		private const GUN_AREA:Rectangle = new Rectangle(10, 10, 275, 390);
 		private const SCENE:Rectangle = new Rectangle(0, 30, 50, 30); // Área da cena correspondente à do palco
 		private const G = new Point(0, -2); // Aceleração da gravidade (m/s/s)
-		private const TARGET_R0:Point = new Point(45, 5); // Posição inicial do alvo (em metros)
+		private const TARGET_R0:Point = new Point(44, 5); // Posição inicial do alvo (em metros)
 		private const TARGET_R0_PIXELS:Point = meter2pixel(TARGET_R0); // Posição inicial do alvo (em pixels)
 		private const BULLET_R0:Point = new Point(5, 5); // Posição inicial da bala do revólver (em metros)
 		private const BULLET_R0_PIXELS:Point = meter2pixel(BULLET_R0); // Posição inicial da bala do revólve (em pixels)
