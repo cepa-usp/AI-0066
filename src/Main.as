@@ -113,7 +113,7 @@ package
 		private const BULLET_R0_PIXELS:Point = meter2pixel(BULLET_R0); // Posição inicial da bala do revólve (em pixels)
 		private const H_MAX:Number = 0.85 * (SCENE.top - TARGET_R0.y); // Altura máxima atingida pelo alvo (configurada de modo que nunca saia da área visível do palco)
 		private const TARGET_V0:Point = new Point(0, Math.sqrt(2 * H_MAX * Math.abs(G.y))); // Velocidade inicial do alvo (ao ser jogado para cima, na vertical) (em m/s)
-		private const BULLET_SPEED:Number = 10 * 1.5 * TARGET_V0.y; // Módulo da velocidade da bala (m/s)
+		private const BULLET_SPEED:Number = 1.5 * TARGET_V0.y; // Módulo da velocidade da bala (m/s)
 		private const GUNFIRE_URI:String = "assets/sound/gunfire.mp3"; // URI do efeito sonoro do tiro
 		private const gunfireTransform:SoundTransform = new SoundTransform(1, -0.5); // Faz o som do tiro ser mais intenso na caixa esquerda
 		private const TARGET_HIT_URI:String = "assets/sound/target_hit.mp3"; // URI do efeito sonoro da bala atingindo o alvo
