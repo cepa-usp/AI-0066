@@ -11,6 +11,7 @@ package BaseAssets
 	 */
 	public class FeedBackScreen extends MovieClip
 	{
+		public var okCancelMode:Boolean = false;
 		
 		public function FeedBackScreen() 
 		{
@@ -34,7 +35,7 @@ package BaseAssets
 		private function escCloseScreen(e:KeyboardEvent):void 
 		{
 			if (e.keyCode ==  Keyboard.ESCAPE) {
-				if(this.currentFrame == 1) this.play();
+				if (this.currentFrame == 1) closeScreen(null);
 			}
 		}
 		
@@ -44,10 +45,30 @@ package BaseAssets
 			dispatchEvent(new Event(Event.CLOSE, true));
 		}
 		
+		private function closeScreenOK(e:MouseEvent):void 
+		{
+			this.play();
+			dispatchEvent(new Event("OK", true));
+		}
+		
 		private function openScreen():void
 		{
 			this.gotoAndStop("BEGIN");
-			this.closeButton.addEventListener(MouseEvent.CLICK, closeScreen, false, 0, true);
+			
+			if (okCancelMode) {
+				closeButton.x = -125;
+				cancelButton.x = 125;
+				cancelButton.visible = true;
+				closeButton.visible = true;
+				
+				cancelButton.addEventListener(MouseEvent.CLICK, closeScreen, false, 0, true);
+				closeButton.addEventListener(MouseEvent.CLICK, closeScreenOK, false, 0, true);
+			}else {
+				closeButton.x = 0;
+				cancelButton.visible = false;
+				closeButton.visible = true;
+				closeButton.addEventListener(MouseEvent.CLICK, closeScreen, false, 0, true);
+			}
 		}
 		
 		public function setText(texto:String):void

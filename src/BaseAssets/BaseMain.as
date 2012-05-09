@@ -20,7 +20,7 @@ package BaseAssets
 		 */
 		private var creditosScreen:AboutScreen;
 		private var orientacoesScreen:InstScreen;
-		private var feedbackScreen:FeedBackScreen;
+		protected var feedbackScreen:FeedBackScreen;
 		
 		public var botoes:Botoes;
 		private var bordaAtividade:Borda;
@@ -75,7 +75,9 @@ package BaseAssets
 			botoes.tutorialBtn.addEventListener(MouseEvent.CLICK, iniciaTutorial);
 			botoes.orientacoesBtn.addEventListener(MouseEvent.CLICK, openOrientacoes);
 			botoes.creditos.addEventListener(MouseEvent.CLICK, openCreditos);
-			botoes.resetButton.addEventListener(MouseEvent.CLICK, reset);
+			//botoes.resetButton.addEventListener(MouseEvent.CLICK, reset);
+			botoes.resetButton.mouseEnabled = false;
+			botoes.resetButton.alpha = 0.5;
 			
 			createToolTips();
 		}

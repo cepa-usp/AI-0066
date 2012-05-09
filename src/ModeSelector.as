@@ -38,10 +38,35 @@ package
 			
 			handle.addEventListener(MouseEvent.MOUSE_DOWN, grabHandle);
 			board.addEventListener(MouseEvent.MOUSE_UP, releaseHandle);
-			board.addEventListener(MouseEvent.CLICK, select);
+			//board.addEventListener(MouseEvent.CLICK, select);
+			invMode.addEventListener(MouseEvent.CLICK, selectInv);
+			evalMode.addEventListener(MouseEvent.CLICK, selectEval);
+			
+			invMode.buttonMode = true;
+			evalMode.buttonMode = true;
 			
 			okButton.addEventListener(MouseEvent.CLICK, ok);
 			cancelButton.addEventListener(MouseEvent.CLICK, cancel);
+		}
+		
+		public function selectInv(e:MouseEvent):void 
+		{
+			if(_mode != MODE_EXPLORE){
+				_mode = MODE_EXPLORE;
+				
+				handle.x = mark1.x;
+				handle.y = mark1.y;
+			}
+		}
+		
+		public function selectEval(e:MouseEvent):void 
+		{
+			if(_mode != MODE_EVAL){
+				_mode = MODE_EVAL;
+				
+				handle.x = mark2.x;
+				handle.y = mark2.y;
+			}
 		}
 		
 		private function ok (event:Event) : void

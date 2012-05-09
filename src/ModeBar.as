@@ -32,7 +32,7 @@ package
 			if (_mode == ModeSelector.MODE_EVAL)
 			{
 				_mode = ModeSelector.MODE_EXPLORE;
-				info.text = "Modo de experimentação";
+				info.text = "Modo de investigação";
 			}
 			else if (_mode == ModeSelector.MODE_EXPLORE)
 			{

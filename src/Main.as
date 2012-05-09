@@ -104,7 +104,7 @@ package
 		private const STATE_3:String = "STATE_3"; // Após atirar e antes de encerrar a animação
 		private const STATE_4:String = "STATE_4"; // Após encerrar a animação (fim)
 		private const VIEWPORT:Rectangle = new Rectangle(0, 0, 700, 500); // Área visível do palco
-		private const GUN_AREA:Rectangle = new Rectangle(10, 10, 275, 390);
+		private const GUN_AREA:Rectangle = new Rectangle(60, 40, VIEWPORT.width / 2 - 60, VIEWPORT.height - 40 - 50);
 		private const SCENE:Rectangle = new Rectangle(0, 30, 50, 30); // Área da cena correspondente à do palco
 		private const G = new Point(0, -2); // Aceleração da gravidade (m/s/s)
 		private const TARGET_R0:Point = new Point(44, 5); // Posição inicial do alvo (em metros)
@@ -113,7 +113,7 @@ package
 		private const BULLET_R0_PIXELS:Point = meter2pixel(BULLET_R0); // Posição inicial da bala do revólve (em pixels)
 		private const H_MAX:Number = 0.85 * (SCENE.top - TARGET_R0.y); // Altura máxima atingida pelo alvo (configurada de modo que nunca saia da área visível do palco)
 		private const TARGET_V0:Point = new Point(0, Math.sqrt(2 * H_MAX * Math.abs(G.y))); // Velocidade inicial do alvo (ao ser jogado para cima, na vertical) (em m/s)
-		private const BULLET_SPEED:Number = 1.5 * TARGET_V0.y; // Módulo da velocidade da bala (m/s)
+		private const BULLET_SPEED:Number = 10 * 1.5 * TARGET_V0.y; // Módulo da velocidade da bala (m/s)
 		private const GUNFIRE_URI:String = "assets/sound/gunfire.mp3"; // URI do efeito sonoro do tiro
 		private const gunfireTransform:SoundTransform = new SoundTransform(1, -0.5); // Faz o som do tiro ser mais intenso na caixa esquerda
 		private const TARGET_HIT_URI:String = "assets/sound/target_hit.mp3"; // URI do efeito sonoro da bala atingindo o alvo
@@ -138,6 +138,7 @@ package
 		private var bullet_r0:Point; // Posição inicial da bala
 		private var clickOffset:Point;
 		private var challengeAchieved:Boolean;
+		private var shots:Array;
 		
 		/*
 		 * Inicialização (CRIAÇÃO DE OBJETOS) dependente do palco (stage).
@@ -162,6 +163,7 @@ package
 			bullet_v0 = new Point();
 			
 			streak = 0;
+			shots = new Array();
 			
 			clickOffset = new Point();
 			
@@ -174,13 +176,6 @@ package
 			// Som da bala atingindo o alvo
 			targethit = new Sound();
 			targethit.load(new URLRequest(TARGET_HIT_URI));
-			
-			// Configura a tela de instruções
-			challengeButton.visible = false;
-			hideChallengeScreen();
-			//challengeScreen.visible = false;
-			challengeScreen.addEventListener(MouseEvent.CLICK, hideChallengeScreen);
-			challengeButton.addEventListener(MouseEvent.CLICK, showChallengeScreen);
 			
 			// Configura a arma
 			gun.x = BULLET_R0_PIXELS.x;
@@ -202,6 +197,8 @@ package
 			modeBar.addEventListener(MouseEvent.CLICK, showModeScreen);
 			modeSelector.addEventListener(Event.CHANGE, changeMode);
 			
+			feedbackScreen.addEventListener("OK", changeMode);
+			
 			initContextMenu();
 			reset();
 		}
@@ -210,11 +207,13 @@ package
 		{
 			modeBar.swap();
 			streak = 0;
+			modeSelector.selectInv(null);
 		}
 		
 		private function showModeScreen (event:MouseEvent) : void 
 		{
 			modeSelector.visible = true;
+			setChildIndex(modeSelector, numChildren - 1);
 		}
 		
 		/*
@@ -280,29 +279,7 @@ package
 			
 			// Oculta a bala
 			bullet.visible = false;
-		}
-		
-		/*
-		 * Apresenta o desafio
-		 */
-		private function showChallengeScreen (event:Event = null) : void
-		{
-			if (!challengeScreen.visible)
-			{
-				challengeScreen.visible = true;
-				challengeScreen.reversePlay();
-			}
-		}
-		
-		/*
-		 * Oculta o desafio
-		 */
-		private function hideChallengeScreen (event:Event = null) : void
-		{
-			if (challengeScreen.visible) 
-			{
-				challengeScreen.gotoAndPlay(2);
-			}
+			
 		}
 		
 		/*
@@ -383,7 +360,7 @@ package
 		private function updatePerfectAimAngle () : void
 		{
 			bullet_r0 = pixel2meter(new Point(bullet.x, bullet.y));
-				
+			
 			perfectStageAimAngle = Math.atan((TARGET_R0_PIXELS.y - H_MAX * VIEWPORT.height / SCENE.height - bullet.y) / (TARGET_R0_PIXELS.x - bullet.x)); // Ângulo perfeito de tiro, no sistema de coordenadas do palco (usado para alinhar rotacionar a arma)
 			perfectSceneAimAngle = Math.atan((TARGET_R0.y + H_MAX - bullet_r0.y) / (TARGET_R0.x - bullet_r0.x)); // Ângulo perfeito de tiro, no sistema de coordenadas da cena (usado nas equações de movimento)
 		}
@@ -438,6 +415,7 @@ package
 				if (gunfire.bytesLoaded == gunfire.bytesTotal) gunfire.play(0, 1, gunfireTransform);
 				
 				state = STATE_3;
+				
 			}
 		}
 		
@@ -515,11 +493,13 @@ package
 			{
 				finishAnimation();
 				streak = 0;
+				wrongShot();
 			}
 			else if (!VIEWPORT.contains(target.x, target.y))
 			{
 				finishAnimation();
 				streak = 0;
+				wrongShot();
 			}
 			else if (bullet.x > target.x)
 			{
@@ -527,6 +507,8 @@ package
 				if (Math.abs(bullet.y - target.y) < target.width / 2)
 				{
 					if (targethit.bytesLoaded == targethit.bytesTotal) targethit.play(0, 1, TARGET_HIT_TRANSFORM);
+					
+					shots.push(true);
 					
 					target.hole.visible = true;
 					target.hole.y = bullet.y - target.y;
@@ -541,12 +523,44 @@ package
 						if (++streak == N)
 						{
 							challengeAchieved = true;
-							challengeButton.visible = true;
-							showChallengeScreen();
+							feedbackScreen.okCancelMode = false;
+							feedbackScreen.setText("Parabéns! Parece que você já entendeu qual é a técnica, o que conclui esta atividade interativa. Entretanto, você pode continuar atirando quantas vezes quiser.");
+							
+							//TODO: 
+							//Colocar completed = true e impedir que o status seja modificado.
 						}
 					}
 					
 					finishAnimation();
+				}
+			}
+		}
+		
+		private function wrongShot():void
+		{
+			if (modeBar.mode == ModeSelector.MODE_EVAL && !challengeAchieved) {
+				shots.push(false);
+				verifyWrongShots();
+			}
+			//TODO: contabilizar os erros, caso o aluno erre 3 em 5 mostrar a seguinte mensagem:
+			//"Parece que você não identificou a técnica para acertar o alvo. Você gostaria de voltar para o modo de investigação (nele, você pode posicionar a arma livremente)?"
+			
+		}
+		
+		private function verifyWrongShots():void
+		{
+			trace(shots.length);
+			if (shots.length >= 5) {
+				var wrongShots:int = 0;
+				for (var i:int = shots.length - 1; i >= shots.length - 5 ; i--)
+				{
+					if (!shots[i]) wrongShots++;
+				}
+				
+				if (wrongShots >= 3) {
+					feedbackScreen.okCancelMode = true;
+					feedbackScreen.setText("Parece que você não identificou a técnica para acertar o alvo. Você gostaria de voltar para o modo de investigação (nele, você pode posicionar a arma livremente)?");
+					//A tela de mensagem deve conter 2 botões: OK e CANCELAR, onde OK volta para o modo de experimentação e CANCELAR permanesse no modo avaliação.
 				}
 			}
 		}
