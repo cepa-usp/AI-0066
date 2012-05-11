@@ -216,9 +216,17 @@ package
 		
 		private function changeMode(e:Event):void 
 		{
-			modeBar.swap();
-			streak = 0;
-			modeSelector.selectInv(null);
+			if(ModeBar(modeBar).mode == ModeSelector.MODE_EVAL){
+				modeBar.swap();
+				streak = 0;
+				modeSelector.selectInv(null);
+			}else {
+				modeBar.swap();
+				streak = 0;
+				modeSelector.selectEval(null);
+			}
+			
+			resetAnimation();
 		}
 		
 		private function showModeScreen (event:MouseEvent) : void 
