@@ -1,8 +1,8 @@
-package
+﻿package
 {
-	import flash.display.Sprite;
+	import flash.display.MovieClip;
 	
-	public class Gun extends Sprite
+	public class Gun extends MovieClip
 	{
 		public function Gun ()
 		{
