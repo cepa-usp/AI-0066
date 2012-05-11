@@ -16,6 +16,8 @@ package
 	import flash.events.ContextMenuEvent;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
+	import flash.events.TimerEvent;
+	import flash.external.ExternalInterface;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.media.Sound;
@@ -24,6 +26,8 @@ package
 	import flash.ui.ContextMenu;
 	import flash.ui.ContextMenuBuiltInItems;
 	import flash.ui.ContextMenuItem;
+	import flash.utils.Timer;
+	import pipwerks.SCORM;
 
 	import cepa.utils.Cronometer;
 	
@@ -201,6 +205,13 @@ package
 			
 			initContextMenu();
 			reset();
+			
+			if (ExternalInterface.available) {
+				initLMSConnection();
+				if (!completed) iniciaTutorial();
+			}else{
+				iniciaTutorial();
+			}
 		}
 		
 		private function changeMode(e:Event):void 
@@ -526,8 +537,16 @@ package
 							feedbackScreen.okCancelMode = false;
 							feedbackScreen.setText("Parabéns! Parece que você já entendeu qual é a técnica, o que conclui esta atividade interativa. Entretanto, você pode continuar atirando quantas vezes quiser.");
 							
-							//TODO: 
 							//Colocar completed = true e impedir que o status seja modificado.
+							
+							if(ExternalInterface.available){
+								if (!completed) {
+									completed = true;
+									score = 100;
+									
+									commit();
+								}
+							}
 						}
 					}
 					
@@ -604,9 +623,213 @@ package
 		}
 		
 		
-		override public function iniciaTutorial(e:MouseEvent = null):void
+		//---------------- Tutorial -----------------------
+		
+		private var balao:CaixaTexto;
+		private var pointsTuto:Array;
+		private var tutoBaloonPos:Array;
+		private var tutoPos:int;
+		private var alturaForTuto:Point = new Point();
+		private var etoForTuto:Point = new Point();
+		private var tutoSequence:Array = ["O primeiro clique do mouse em qualquer lugar do cenário (exceto no revólver) lança o alvo para cima.", 
+										  "O segundo clique faz o revólver atirar.",
+										  "O terceiro clique começa uma nova tentativa.",
+										  "A mira do revólver (linha tracejada) sempre segue o mouse.",
+										  "No modo de investigação você pode mover o revólver livremente.",
+										  "Quando você achar que já está preparado(a) para ser avaliado(a), alterne para o modo de avaliação."];
+		
+		override public function iniciaTutorial(e:MouseEvent = null):void 
 		{
+			tutoPos = 0;
 			
+			if(balao == null){
+				balao = new CaixaTexto(true);
+				addChild(balao);
+				balao.visible = false;
+				
+				pointsTuto = 	[new Point(target.x - target.width / 2, target.y),
+								new Point(gun.x , gun.y),
+								new Point(180, 200),
+								new Point(gun.x + 35, gun.y),
+								new Point(gun.x + 35, gun.y),
+								new Point(modeBar.x + modeBar.width / 2, modeBar.y + modeBar.height)];
+								
+				tutoBaloonPos = [[CaixaTexto.RIGHT, CaixaTexto.LAST],
+								[CaixaTexto.BOTTON, CaixaTexto.FIRST],
+								["", ""],
+								[CaixaTexto.LEFT, CaixaTexto.FIRST],
+								[CaixaTexto.LEFT, CaixaTexto.CENTER],
+								[CaixaTexto.TOP, CaixaTexto.LAST]];
+			}
+			balao.removeEventListener(Event.CLOSE, closeBalao);
+			
+			balao.setText(tutoSequence[tutoPos], tutoBaloonPos[tutoPos][0], tutoBaloonPos[tutoPos][1]);
+			balao.setPosition(pointsTuto[tutoPos].x, pointsTuto[tutoPos].y);
+			balao.addEventListener(Event.CLOSE, closeBalao);
+			balao.visible = true;
+		}
+		
+		private function closeBalao(e:Event):void 
+		{
+			tutoPos++;
+			if (tutoPos >= tutoSequence.length) {
+				balao.removeEventListener(Event.CLOSE, closeBalao);
+				balao.visible = false;
+			}else {
+				balao.setText(tutoSequence[tutoPos], tutoBaloonPos[tutoPos][0], tutoBaloonPos[tutoPos][1]);
+				balao.setPosition(pointsTuto[tutoPos].x, pointsTuto[tutoPos].y);
+			}
+		}
+		
+		
+		
+		/*------------------------------------------------------------------------------------------------*/
+		//SCORM:
+		
+		private const PING_INTERVAL:Number = 5 * 60 * 1000; // 5 minutos
+		private var completed:Boolean;
+		private var scorm:SCORM;
+		private var scormExercise:int;
+		private var connected:Boolean;
+		private var score:int = 0;
+		private var pingTimer:Timer;
+		private var mementoSerialized:String = "";
+		
+		/**
+		 * @private
+		 * Inicia a conexão com o LMS.
+		 */
+		private function initLMSConnection () : void
+		{
+			completed = false;
+			connected = false;
+			scorm = new SCORM();
+			
+			pingTimer = new Timer(PING_INTERVAL);
+			pingTimer.addEventListener(TimerEvent.TIMER, pingLMS);
+			
+			connected = scorm.connect();
+			
+			if (connected) {
+				
+				if (scorm.get("cmi.mode") != "normal") return;
+				
+				scorm.set("cmi.exit", "suspend");
+				// Verifica se a AI já foi concluída.
+				var status:String = scorm.get("cmi.completion_status");	
+				//mementoSerialized = scorm.get("cmi.suspend_data");
+				var stringScore:String = scorm.get("cmi.score.raw");
+				
+				switch(status)
+				{
+					// Primeiro acesso à AI
+					case "not attempted":
+					case "unknown":
+					default:
+						completed = false;
+						break;
+					
+					// Continuando a AI...
+					case "incomplete":
+						completed = false;
+						break;
+					
+					// A AI já foi completada.
+					case "completed":
+						completed = true;
+						//setMessage("ATENÇÃO: esta Atividade Interativa já foi completada. Você pode refazê-la quantas vezes quiser, mas não valerá nota.");
+						break;
+				}
+				
+				//unmarshalObjects(mementoSerialized);
+				scormExercise = 1;
+				score = Number(stringScore.replace(",", "."));
+				
+				var success:Boolean = scorm.set("cmi.score.min", "0");
+				if (success) success = scorm.set("cmi.score.max", "100");
+				
+				if (success)
+				{
+					scorm.save();
+					pingTimer.start();
+				}
+				else
+				{
+					//trace("Falha ao enviar dados para o LMS.");
+					connected = false;
+				}
+			}
+			else
+			{
+				trace("Esta Atividade Interativa não está conectada a um LMS: seu aproveitamento nela NÃO será salvo.");
+				mementoSerialized = ExternalInterface.call("getLocalStorageString");
+			}
+			
+			//reset();
+		}
+		
+		/**
+		 * @private
+		 * Salva cmi.score.raw, cmi.location e cmi.completion_status no LMS
+		 */ 
+		private function commit()
+		{
+			if (connected)
+			{
+				if (scorm.get("cmi.mode") != "normal") return;
+				
+				// Salva no LMS a nota do aluno.
+				var success:Boolean = scorm.set("cmi.score.raw", score.toString());
+
+				// Notifica o LMS que esta atividade foi concluída.
+				success = scorm.set("cmi.completion_status", (completed ? "completed" : "incomplete"));
+
+				// Salva no LMS o exercício que deve ser exibido quando a AI for acessada novamente.
+				success = scorm.set("cmi.location", scormExercise.toString());
+				
+				// Salva no LMS a string que representa a situação atual da AI para ser recuperada posteriormente.
+				//mementoSerialized = marshalObjects();
+				//success = scorm.set("cmi.suspend_data", mementoSerialized.toString());
+
+				if (success)
+				{
+					scorm.save();
+				}
+				else
+				{
+					pingTimer.stop();
+					//setMessage("Falha na conexão com o LMS.");
+					connected = false;
+				}
+			}else { //LocalStorage
+				//ExternalInterface.call("save2LS", mementoSerialized);
+			}
+		}
+		
+		/**
+		 * @private
+		 * Mantém a conexão com LMS ativa, atualizando a variável cmi.session_time
+		 */
+		private function pingLMS (event:TimerEvent)
+		{
+			//scorm.get("cmi.completion_status");
+			commit();
+		}
+		
+		private function saveStatus(e:Event = null):void
+		{
+			if (ExternalInterface.available) {
+				
+				if (scorm.get("cmi.mode") != "normal") return;
+				
+				//saveStatusForRecovery();
+				if (connected) {
+					scorm.set("cmi.suspend_data", mementoSerialized);
+					commit();
+				}else {//LocalStorage
+					ExternalInterface.call("save2LS", mementoSerialized);
+				}
+			}
 		}
 	}
 }
