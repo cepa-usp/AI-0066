@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Changelog
  * ----------------------
  * 2011.01.06: correção de bug (Ivan)
@@ -151,6 +151,7 @@ package
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 			
+			nuvens.mouseEnabled = false;
 			// Configura o alvo
 			target = new Target();
 			addChild(target);
@@ -411,6 +412,7 @@ package
 		{
 			if (state == STATE_2)
 			{
+				gun.play();
 				bullet.visible = true;
 				
 				// t0
