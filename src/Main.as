@@ -151,7 +151,7 @@ package
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 			
-			nuvens.mouseEnabled = false;
+			nuvens.mouseChildren = false;
 			// Configura o alvo
 			target = new Target();
 			addChild(target);
@@ -193,6 +193,7 @@ package
 			
 			setChildIndex(bullet, 0);
 			setChildIndex(target, 0);
+			setChildIndex(nuvens, 0);
 			
 			// Ativa a interação com o mouse
 			stage.addEventListener(MouseEvent.CLICK, interact);
@@ -307,7 +308,7 @@ package
 		 */
 		private function interact (event:MouseEvent) : void
 		{
-			if (event.target == stage || event.target == target || event.target == gun.laser) switch (state)
+			if (event.target == stage || event.target == target || event.target == gun.laser || event.target == nuvens) switch (state)
 			{
 				// Estado inicial: antes de jogar o alvo e de atirar
 				case STATE_1:
