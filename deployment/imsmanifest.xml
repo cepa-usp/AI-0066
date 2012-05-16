@@ -17,7 +17,7 @@
 </metadata>
 <organizations default="CEPA">
 	<organization identifier="CEPA">
-		<title>Título</title>
+		<title>Tiro ao alvo</title>
 		<item identifier="item1" identifierref="item1_resource">
 			<title>Exercício</title>
 		</item>

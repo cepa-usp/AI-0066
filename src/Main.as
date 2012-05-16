@@ -208,9 +208,16 @@ package
 			initContextMenu();
 			reset();
 			
+			gun.buttonMode = true;
+			
 			if (ExternalInterface.available) {
 				initLMSConnection();
 				if (!completed) iniciaTutorial();
+				else {
+					modeBar.mouseEnabled = false;
+					modeBar.alpha = 0.5;
+					modeBar.filters = [GRAYSCALE_FILTER];
+				}
 			}else{
 				iniciaTutorial();
 			}
@@ -222,10 +229,12 @@ package
 				modeBar.swap();
 				streak = 0;
 				modeSelector.selectInv(null);
+				gun.buttonMode = true;
 			}else {
 				modeBar.swap();
 				streak = 0;
 				modeSelector.selectEval(null);
+				gun.buttonMode = false;
 			}
 			
 			resetAnimation();
@@ -449,6 +458,7 @@ package
 			if (state == STATE_2 || state == STATE_3)
 			{
 				state = STATE_4;
+				info.text = "Clique para recomeçar";
 				
 				tTarget.stop();
 				tBullet.stop();
@@ -558,6 +568,11 @@ package
 									commit();
 								}
 							}
+							
+							changeMode(null);
+							modeBar.mouseEnabled = false;
+							modeBar.alpha = 0.5;
+							modeBar.filters = [GRAYSCALE_FILTER];
 						}
 					}
 					
@@ -579,7 +594,6 @@ package
 		
 		private function verifyWrongShots():void
 		{
-			trace(shots.length);
 			if (shots.length >= 5) {
 				var wrongShots:int = 0;
 				for (var i:int = shots.length - 1; i >= shots.length - 5 ; i--)
@@ -637,6 +651,7 @@ package
 		//---------------- Tutorial -----------------------
 		
 		private var balao:CaixaTexto;
+		private var gunPos:Point = new Point();
 		private var pointsTuto:Array;
 		private var tutoBaloonPos:Array;
 		private var tutoPos:int;
@@ -652,6 +667,8 @@ package
 		override public function iniciaTutorial(e:MouseEvent = null):void 
 		{
 			tutoPos = 0;
+			gunPos.x = gun.x;
+			gunPos.y = gun.y;
 			
 			if(balao == null){
 				balao = new CaixaTexto(true);
@@ -659,14 +676,14 @@ package
 				balao.visible = false;
 				
 				pointsTuto = 	[new Point(target.x - target.width / 2, target.y),
-								new Point(gun.x , gun.y),
+								gunPos,
 								new Point(180, 200),
-								new Point(gun.x + 35, gun.y),
-								new Point(gun.x + 35, gun.y),
+								gunPos,
+								gunPos,
 								new Point(modeBar.x + modeBar.width / 2, modeBar.y + modeBar.height)];
 								
 				tutoBaloonPos = [[CaixaTexto.RIGHT, CaixaTexto.LAST],
-								[CaixaTexto.BOTTON, CaixaTexto.FIRST],
+								["as", "as"],
 								["", ""],
 								[CaixaTexto.LEFT, CaixaTexto.FIRST],
 								[CaixaTexto.LEFT, CaixaTexto.CENTER],
@@ -680,9 +697,26 @@ package
 			balao.visible = true;
 		}
 		
+		private function updateGunPos():void
+		{
+			gunPos.x = gun.x;
+			gunPos.y = gun.y;
+			
+			if (tutoPos == 1) {
+				if (gun.y > 150) tutoBaloonPos[1][0] = CaixaTexto.BOTTON;
+				else tutoBaloonPos[1][0] = CaixaTexto.TOP;
+				
+				if (gun.x > 100) tutoBaloonPos[1][1] = CaixaTexto.CENTER;
+				else tutoBaloonPos[1][1] = CaixaTexto.FIRST;
+			}else {
+				gunPos.x += 35;
+			}
+		}
+		
 		private function closeBalao(e:Event):void 
 		{
 			tutoPos++;
+			updateGunPos();
 			if (tutoPos >= tutoSequence.length) {
 				balao.removeEventListener(Event.CLOSE, closeBalao);
 				balao.visible = false;

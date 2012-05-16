@@ -7,6 +7,7 @@ package BaseAssets
 	import flash.events.ContextMenuEvent;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
+	import flash.filters.ColorMatrixFilter;
 	import flash.filters.DropShadowFilter;
 	import flash.geom.Rectangle;
 	/**
@@ -24,6 +25,16 @@ package BaseAssets
 		
 		public var botoes:Botoes;
 		private var bordaAtividade:Borda;
+		
+		/*
+		 * Filtro de conversão para tons de cinza.
+		 */
+		public const GRAYSCALE_FILTER:ColorMatrixFilter = new ColorMatrixFilter([
+			0.2225, 0.7169, 0.0606, 0, 0,
+			0.2225, 0.7169, 0.0606, 0, 0,
+			0.2225, 0.7169, 0.0606, 0, 0,
+			0.0000, 0.0000, 0.0000, 1, 0
+		]);
 		
 		public function BaseMain() 
 		{
@@ -78,6 +89,7 @@ package BaseAssets
 			//botoes.resetButton.addEventListener(MouseEvent.CLICK, reset);
 			botoes.resetButton.mouseEnabled = false;
 			botoes.resetButton.alpha = 0.5;
+			botoes.resetButton.filters = [GRAYSCALE_FILTER];
 			
 			createToolTips();
 		}
