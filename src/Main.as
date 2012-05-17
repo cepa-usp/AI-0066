@@ -279,6 +279,9 @@ package
 			{
 				bullet.x = gun.x = GUN_AREA.left + GUN_AREA.width * Math.random();
 				bullet.y = gun.y = GUN_AREA.top + GUN_AREA.height * Math.random();
+			}else {
+				bullet.x = gun.x;
+				bullet.y = gun.y;
 			}
 			
 			updatePerfectAimAngle();
